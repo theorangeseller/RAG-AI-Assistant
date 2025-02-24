@@ -1,0 +1,61 @@
+ #Create the Sign-In Page
+Set Up Your Frontend: Create a sign-in page in your web application. You can use a framework like React, Next.js, or any other framework of your choice.
+Design the Sign-In Form: Your sign-in page should have fields for username and password, as well as a button for Microsoft authentication. Here's a simple example using React:
+
+import { useState } from 'react';
+import { supabase } from './supabaseClient'; // Import your Supabase client
+
+const SignIn = () => {
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+
+    const handleEmailSignIn = async (e) => {
+        e.preventDefault();
+        const { user, error } = await supabase.auth.signIn({
+            email,
+            password,
+        });
+        if (error) {
+            console.error('Error signing in:', error.message);
+        } else {
+            console.log('User signed in:', user);
+        }
+    };
+
+    const handleMicrosoftSignIn = async () => {
+        const { user, error } = await supabase.auth.signIn({
+            provider: 'microsoft',
+        });
+        if (error) {
+            console.error('Error signing in with Microsoft:', error.message);
+        } else {
+            console.log('User signed in with Microsoft:', user);
+        }
+    };
+
+    return (
+        <div>
+            <h1>Sign In</h1>
+            <form onSubmit={handleEmailSignIn}>
+                <input
+                    type="email"
+                    placeholder="Email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                />
+                <input
+                    type="password"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                />
+                <button type="submit">Sign In</button>
+            </form>
+            <button onClick={handleMicrosoftSignIn}>Sign In with Microsoft</button>
+        </div>
+    );
+};
+
+export default SignIn;
