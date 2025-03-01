@@ -24,7 +24,7 @@ export function ChatInterface() {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-8">
         <div className="text-center space-y-1">
-          <h1 className="text-4xl font-semibold tracking-tight">Welcome to PJ Tech AI Assistant.</h1>
+          <h1 className="text-4xl font-semibold tracking-tight">Welcome to OS News AI Assistant.</h1>
           <p className="text-xl text-muted-foreground">How can I help you today?</p>
         </div>
         <div className="w-full max-w-3xl px-4">

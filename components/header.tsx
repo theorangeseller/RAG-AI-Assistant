@@ -18,7 +18,7 @@ export function Header() {
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container mx-auto flex h-14 items-center justify-between px-4">
         <div className="flex items-center gap-2">
-          <div className="font-semibold tracking-tight">PJ Tech</div>
+          <div className="font-semibold tracking-tight">OS News</div>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" className="h-8 w-8">
