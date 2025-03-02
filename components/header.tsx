@@ -9,7 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
-import { Settings } from 'lucide-react'
+import { RagSettingsButton } from './chat/rag-settings-button'
 
 export function Header() {
   const { data: session } = useSession()
@@ -21,9 +21,7 @@ export function Header() {
           <div className="font-semibold tracking-tight">OS News</div>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
-          </Button>
+          {session && <RagSettingsButton />}
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
