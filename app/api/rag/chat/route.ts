@@ -3,8 +3,9 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateResponse } from '@/lib/rag/rag-chain'
 import { loadAndProcessDocuments } from '@/lib/rag/document-processor'
-import { initializeVectorStore, getVectorStore } from '@/lib/rag/vector-store'
+import { getRagService } from '@/lib/rag/rag-instance'
 import path from 'path'
+import fs from 'fs/promises'
 
 export async function POST(req: NextRequest) {
   try {
@@ -27,21 +28,52 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Initialize vector store if not already initialized
-    if (!getVectorStore()) {
-      const sourceDir = path.join(process.cwd(), 'filesource')
-      const documents = await loadAndProcessDocuments(sourceDir)
-      await initializeVectorStore(documents)
+    console.log('Initializing RAG service...');
+    const service = await getRagService()
+    const sourceDir = path.join(process.cwd(), 'filesource')
+    
+    // Get the Chroma manager from the service
+    const chromaManager = await service.getChromaManager();
+    const documentCount = await chromaManager.count();
+    
+    if (documentCount === 0) {
+      console.log('No documents found in collection, loading from filesource directory...');
+      const files = await fs.readdir(sourceDir)
+      console.log('Found files:', files);
+      
+      for (const file of files) {
+        console.log(`Loading file: ${file}`);
+        const content = await fs.readFile(path.join(sourceDir, file), 'utf-8')
+        console.log(`Adding document ${file} to RAG service...`);
+        await service.addDocument(file, content, { source: file })
+        console.log(`Successfully added ${file}`);
+      }
+      
+      // Verify documents were added
+      const newCount = await chromaManager.count();
+      console.log(`Collection now has ${newCount} documents`);
+      
+      if (newCount === 0) {
+        throw new Error('Failed to add documents to collection');
+      }
+    } else {
+      console.log(`Found ${documentCount} existing documents in collection`);
     }
 
+    console.log('Generating response for query:', message);
     // Generate response using RAG
-    const result = await generateResponse(message)
+    const { response, relevantSources } = await generateResponse({ question: message });
+    
+    console.log('Found relevant sources:', relevantSources);
 
-    return NextResponse.json(result)
+    return NextResponse.json({
+      response,
+      sources: relevantSources,
+    })
   } catch (error) {
-    console.error('Error in RAG chat:', error)
+    console.error('Error in RAG chat endpoint:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to process chat request' },
       { status: 500 }
     )
   }

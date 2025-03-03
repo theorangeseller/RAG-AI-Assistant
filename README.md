@@ -80,14 +80,6 @@ create policy "Users can insert their own messages"
   with check (auth.uid()::text = user_id);
 ```
 
-## Deployment
-
-1. Deploy to Vercel:
-   ```bash
-   vercel
-   ```
-
-2. Set up the environment variables in your Vercel project settings.
 
 ## Contributing
 

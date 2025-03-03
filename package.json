@@ -6,19 +6,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "chroma:install": "ts-node -P scripts/tsconfig.json scripts/install-chroma.ts",
+    "chroma:start": "ts-node -P scripts/tsconfig.json scripts/start-chroma.ts",
+    "chroma:setup": "npm run chroma:install && npm run chroma:start"
   },
   "dependencies": {
     "@langchain/community": "^0.3.33",
+    "@langchain/core": "^0.3.42",
     "@langchain/openai": "^0.4.4",
+    "@langchain/textsplitters": "^0.1.0",
     "@radix-ui/react-avatar": "^1.0.4",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-dropdown-menu": "^2.0.6",
     "@radix-ui/react-slot": "^1.0.2",
     "@supabase/ssr": "^0.1.0",
     "@supabase/supabase-js": "^2.39.3",
+    "@types/fs-extra": "^11.0.4",
+    "@types/uuid": "^10.0.0",
+    "@xenova/transformers": "^2.17.2",
     "ai": "^2.2.35",
-    "chromadb": "^1.10.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "langchain": "^0.3.19",
@@ -28,13 +35,17 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "tailwind-merge": "^2.2.1",
-    "tailwindcss-animate": "^1.0.7"
+    "tailwindcss-animate": "^1.0.7",
+    "uuid": "^11.1.0"
   },
   "devDependencies": {
-    "@types/node": "^20.11.17",
+    "@types/dotenv": "^6.1.1",
+    "@types/node": "^20.17.22",
     "@types/react": "^18.2.55",
     "@types/react-dom": "^18.2.19",
     "autoprefixer": "^10.4.17",
+    "chromadb": "^1.10.4",
+    "dotenv": "^16.4.7",
     "eslint": "^8.57.0",
     "eslint-config-next": "14.1.0",
     "glob": "^10.3.10",
@@ -42,6 +53,23 @@
     "postcss": "^8.4.35",
     "rimraf": "^5.0.5",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5.3.3"
-  }
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.2"
+  },
+  "description": "A modern AI chatbot interface powered by Grok AI, built with Next.js 14, Tailwind CSS, and Supabase.",
+  "main": "postcss.config.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theorangeseller/Local-AI-Assistant.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/theorangeseller/Local-AI-Assistant/issues"
+  },
+  "homepage": "https://github.com/theorangeseller/Local-AI-Assistant#readme"
 }

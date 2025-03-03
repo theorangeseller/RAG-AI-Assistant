@@ -1,0 +1,5 @@
+setuptools
+wheel
+numpy>=2.0.0
+chromadb>=0.4.23
+chromadb[server]

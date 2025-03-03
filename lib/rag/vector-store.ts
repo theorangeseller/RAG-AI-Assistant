@@ -1,4 +1,4 @@
-import { MemoryVectorStore } from 'langchain/vectorstores/memory'
+import { MemoryVectorStore } from '@langchain/community/vectorstores/memory'
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { Document } from '@langchain/core/documents'
 
