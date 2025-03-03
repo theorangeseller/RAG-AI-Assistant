@@ -10,6 +10,7 @@ A modern AI chatbot interface powered by Grok AI, built with Next.js 14, Tailwin
 - Chat history for authenticated users
 - Responsive and modern UI design
 - Secure data storage with Supabase
+- RAG chatbot using Langchain and Openai Embedding SDK
 
 ## Tech Stack
 
@@ -19,8 +20,10 @@ A modern AI chatbot interface powered by Grok AI, built with Next.js 14, Tailwin
 - Shadcn UI
 - Next Auth
 - Supabase
-- Vercel AI SDK
 - Grok AI API
+- Langchain
+- Openai Embedding SDK
+- ChromaDB
 
 ## Getting Started
 
@@ -45,12 +48,6 @@ A modern AI chatbot interface powered by Grok AI, built with Next.js 14, Tailwin
    - Set up Supabase credentials
    - Add your Grok API key
 
-5. Run the development server:
-   ```bash
-   npm run dev
-   ```
-
-6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Database Setup
 
@@ -79,7 +76,28 @@ create policy "Users can insert their own messages"
   on messages for insert
   with check (auth.uid()::text = user_id);
 ```
+# RAG setup
+1. Install dependencies
+```bash
+npm install @langchain/core @langchain/openai @langchain/chroma @langchain/community/document_loaders
+```
 
+2. Create a new folder `filesource` in the root directory and add your files there.
+
+3. Create a new folder `data` in the root directory with 3 subfolders: `chroma`, `cache`, `versions`.
+
+4. Run the chroma server:
+```bash
+npm run chroma:install
+npm run chroma:start
+```
+
+5. Run the development server:
+```bash
+npm run dev
+```
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Contributing
 
