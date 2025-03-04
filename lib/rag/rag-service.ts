@@ -1,9 +1,11 @@
 import { CacheManager } from './cache/cache-manager';
 import { VersionManager } from './version-control/version-manager';
 import { ChromaManager, ChromaConfig } from './chroma/chroma-client';
+import { DocumentLoader } from './document-loaders/document-loader';
 import path from 'path';
 import { OpenAIEmbeddings } from '@langchain/openai';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
+import fs from 'fs/promises';
 
 export interface RAGServiceConfig {
   cacheDir: string;
@@ -32,45 +34,61 @@ export class RAGService {
     return this.chromaManager;
   }
 
-  private async processDocument(content: string): Promise<{
+  private async processDocument(filePath: string): Promise<{
     chunks: string[];
     embeddings: number[][];
+    metadata: Record<string, any>;
   }> {
-    const textSplitter = new RecursiveCharacterTextSplitter({
-      chunkSize: 500,
-      chunkOverlap: 100,
-      separators: ['\n\n', '\n', '。', '、', ' '],
-    });
+    // Load and process the document using the DocumentLoader
+    const loadedDoc = await DocumentLoader.load(filePath);
     
-    const chunks = await textSplitter.splitText(content);
+    const docs = await DocumentLoader.splitDocument(loadedDoc);
+    
+    // Generate embeddings for all chunks
+    const chunks = docs.map(doc => doc.pageContent);
     const embeddings = await this.embeddings.embedDocuments(chunks);
-    return { chunks, embeddings };
+    
+    return {
+      chunks,
+      embeddings,
+      metadata: loadedDoc.metadata,
+    };
   }
 
   public async addDocument(
-    documentId: string,
-    content: string,
+    filePath: string,
+    content?: string,
     metadata: Record<string, any> = {}
   ): Promise<string> {
+    const documentId = path.basename(filePath);
+    
     // Check cache first
-    const cachedData = await this.cacheManager.getCachedEmbeddings(documentId, content);
+    const cachedData = content ? 
+      await this.cacheManager.getCachedEmbeddings(documentId, content) :
+      await this.cacheManager.getCachedEmbeddings(
+        documentId, 
+        await fs.readFile(filePath, 'utf-8')
+      );
     
     let chunks: string[];
     let embeddings: number[][];
+    let docMetadata: Record<string, any>;
     
     if (cachedData) {
       // Use cached data
       chunks = cachedData.chunks;
       embeddings = cachedData.embeddings;
+      docMetadata = cachedData.metadata || {};
     } else {
       // Process document and cache results
-      const processed = await this.processDocument(content);
+      const processed = await this.processDocument(filePath);
       chunks = processed.chunks;
       embeddings = processed.embeddings;
+      docMetadata = processed.metadata;
       
       await this.cacheManager.cacheEmbeddings(
         documentId,
-        content,
+        content || await fs.readFile(filePath, 'utf-8'),
         embeddings,
         chunks,
         'latest'
@@ -83,6 +101,7 @@ export class RAGService {
     // Add to Chroma
     const chunkMetadatas = chunks.map((chunk, index) => ({
       ...metadata,
+      ...docMetadata,
       documentId,
       chunkIndex: index,
       totalChunks: chunks.length,
@@ -91,7 +110,7 @@ export class RAGService {
     await this.chromaManager.addDocuments(chunks, embeddings, chunkMetadatas, chunkIds);
 
     // Create version
-    const hash = this.cacheManager.generateHash(content);
+    const hash = this.cacheManager.generateHash(content || await fs.readFile(filePath, 'utf-8'));
     const versionId = this.versionManager.createVersion(
       documentId,
       hash,

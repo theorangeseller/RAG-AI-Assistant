@@ -36,52 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     const service = await getRagService()
-    const sourceDir = path.join(process.cwd(), 'filesource')
     
-    // Check if filesource directory exists
-    try {
-      await fs.access(sourceDir);
-      const files = await fs.readdir(sourceDir);
-    } catch (error) {
-      console.error('Error accessing filesource directory:', error);
-      return NextResponse.json(
-        { error: 'Document source directory not found or inaccessible' },
-        { status: 500 }
-      );
-    }
-    
-    // Get the Chroma manager from the service
-    const chromaManager = await service.getChromaManager();
-    const documentCount = await chromaManager.count();
-    
-    if (documentCount === 0) {
-      const files = await fs.readdir(sourceDir)
-      
-      // Filter for supported file types
-      const supportedFiles = files.filter(file => 
-        SUPPORTED_EXTENSIONS.includes(path.extname(file).toLowerCase())
-      );
-      
-      for (const file of supportedFiles) {
-        try {
-          const filePath = path.join(sourceDir, file);
-          await service.addDocument(filePath);
-        } catch (error) {
-          console.error(`Error loading file ${file}:`, error);
-        }
-      }
-      
-      // Verify documents were added
-      const newCount = await chromaManager.count();
-      
-      if (newCount === 0) {
-        return NextResponse.json(
-          { error: 'Failed to load documents into the system' },
-          { status: 500 }
-        );
-      }
-    }
-
     // Generate response using RAG
     const { response, relevantSources } = await generateResponse({ question: message });
 

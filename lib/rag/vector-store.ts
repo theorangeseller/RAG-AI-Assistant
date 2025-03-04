@@ -1,31 +1,27 @@
-import { MemoryVectorStore } from '@langchain/community/vectorstores/memory'
+import { Chroma } from '@langchain/community/vectorstores/chroma'
 import { OpenAIEmbeddings } from '@langchain/openai'
 import { Document } from '@langchain/core/documents'
 
-// Initialize embeddings model
-const embeddings = new OpenAIEmbeddings({
-  openAIApiKey: process.env.OPENAI_API_KEY,
-})
+let vectorStore: Chroma | null = null
 
-let vectorStore: MemoryVectorStore | null = null
-
-export async function initializeVectorStore(documents: Document[]): Promise<void> {
-  // Create a new vector store instance
-  vectorStore = await MemoryVectorStore.fromDocuments(
-    documents,
-    embeddings
-  )
-}
-
-export async function similaritySearch(query: string, k: number = 4) {
+export async function initializeVectorStore(): Promise<void> {
   if (!vectorStore) {
-    throw new Error('Vector store not initialized')
+    const embeddings = new OpenAIEmbeddings()
+    vectorStore = new Chroma(embeddings, {
+      url: 'http://localhost:8000',
+      collectionName: 'documents'
+    })
   }
-
-  const results = await vectorStore.similaritySearch(query, k)
-  return results
 }
 
-export function getVectorStore() {
+export function getVectorStore(): Chroma | null {
   return vectorStore
+}
+
+export async function createVectorStore(docs: Document[]): Promise<Chroma> {
+  const embeddings = new OpenAIEmbeddings()
+  return await Chroma.fromDocuments(docs, embeddings, {
+    url: 'http://localhost:8000',
+    collectionName: 'documents'
+  })
 } 

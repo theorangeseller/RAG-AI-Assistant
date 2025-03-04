@@ -59,6 +59,7 @@ function requiresDocumentContext(question: string): boolean {
 export const ragChain = RunnableSequence.from([
   async (input: { question: string }) => {
     const service = await getRagService()
+    
     const { chunks, metadatas, distances } = await service.query(input.question, 4)
     
     // Filter out irrelevant chunks based on distance

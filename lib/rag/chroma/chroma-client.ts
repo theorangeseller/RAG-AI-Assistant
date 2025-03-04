@@ -31,17 +31,13 @@ export class ChromaManager {
 
   public async initialize(): Promise<void> {
     try {
-      console.log('Initializing Chroma collection:', this.config.collectionName);
-      
       // First, try to get the collection
       try {
         this.collection = await this.client.getCollection({
           name: this.config.collectionName,
           embeddingFunction: nullEmbeddingFunction,
         });
-        console.log('Found existing collection:', this.config.collectionName);
       } catch (error) {
-        console.log('Collection not found, creating new one:', this.config.collectionName);
         this.collection = await this.client.createCollection({
           name: this.config.collectionName,
           embeddingFunction: nullEmbeddingFunction,
@@ -64,17 +60,12 @@ export class ChromaManager {
     }
 
     try {
-      console.log(`Adding ${documents.length} documents to collection ${this.config.collectionName}`);
-      console.log('Document IDs:', ids);
-      
       await this.collection.add({
         ids,
         embeddings,
         documents,
         metadatas,
       });
-      
-      console.log('Successfully added documents to collection');
     } catch (error) {
       console.error('Error adding documents to collection:', error);
       throw error;
@@ -167,7 +158,6 @@ export class ChromaManager {
     }
     try {
       const count = await this.collection.count();
-      console.log(`Collection ${this.config.collectionName} has ${count} documents`);
       return count;
     } catch (error) {
       console.error('Error getting collection count:', error);
