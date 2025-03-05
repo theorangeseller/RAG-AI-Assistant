@@ -7,9 +7,9 @@ import { ChatMessage } from './chat-message'
 import { Search, FileText, ArrowUp } from 'lucide-react'
 
 interface RagMessage {
-  role: 'user' | 'assistant'
-  content: string
-  sources?: string[]
+  role: "user" | "assistant" | "error";
+  content: string;
+  sources?: string[];
 }
 
 export function RagChatInterface() {
@@ -27,47 +27,78 @@ export function RagChatInterface() {
     scrollToBottom()
   }, [messages])
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
-    if (!input.trim()) return
+    if (!input) return
+
+    const message = input
+    setInput("")
+    setMessages((messages) => [...messages, { role: "user", content: message }])
 
     try {
-      setIsLoading(true)
-      
-      // Add user message
-      const userMessage: RagMessage = { role: 'user', content: input }
-      setMessages(prev => [...prev, userMessage])
-
-      // Call RAG API
-      const response = await fetch('/api/rag/chat', {
-        method: 'POST',
+      console.log('Sending request to /api/rag/chat')
+      const response = await fetch("/api/rag/chat", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          message: input,
-          userId: session?.user?.email,
+        body: JSON.stringify({ 
+          message,
+          userId: session?.user?.email 
         }),
       })
 
+      console.log('Response status:', response.status)
+      
+      let errorMessage = 'Failed to send message. Please try again.'
+      
       if (!response.ok) {
-        throw new Error('Failed to send message')
+        const errorText = await response.text()
+        console.error('Error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          body: errorText
+        })
+        
+        try {
+          const errorData = JSON.parse(errorText)
+          if (errorData.error) {
+            errorMessage = errorData.error
+          }
+        } catch (e) {
+          console.error('Failed to parse error response:', e)
+        }
+        
+        throw new Error(errorMessage)
       }
 
       const data = await response.json()
-      
-      // Add assistant message with sources
-      const assistantMessage: RagMessage = {
-        role: 'assistant',
-        content: data.response,
-        sources: data.sources,
+      console.log('Response data:', data)
+
+      if (data.error) {
+        console.error('Error in response data:', data.error)
+        throw new Error(data.error)
       }
-      setMessages(prev => [...prev, assistantMessage])
-      setInput('')
+
+      setMessages((messages) => [
+        ...messages,
+        { 
+          role: "assistant", 
+          content: data.response,
+          sources: data.sources 
+        },
+      ])
     } catch (error) {
-      console.error('Error sending message:', error)
-    } finally {
-      setIsLoading(false)
+      console.error('Error in handleSubmit:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message. Please try again.'
+      
+      setMessages((messages) => {
+        const lastMessage = messages[messages.length - 1]
+        if (lastMessage?.role === "error") {
+          return messages
+        }
+        return [...messages, { role: "error", content: errorMessage }]
+      })
     }
   }
 

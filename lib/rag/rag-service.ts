@@ -20,14 +20,40 @@ export class RAGService {
   private embeddings: OpenAIEmbeddings;
 
   constructor(config: RAGServiceConfig) {
+    console.log('Initializing RAG service with config:', {
+      cacheDir: config.cacheDir,
+      versionDir: config.versionDir,
+      chromaConfig: {
+        host: config.chroma.host,
+        port: config.chroma.port,
+        collectionName: config.chroma.collectionName
+      }
+    });
+    
     this.cacheManager = new CacheManager(config.cacheDir);
     this.versionManager = new VersionManager(config.versionDir);
     this.chromaManager = new ChromaManager(config.chroma);
+    
+    console.log('Initializing OpenAI embeddings with API key:', 
+      process.env.OPENAI_API_KEY ? 'Present' : 'Missing');
     this.embeddings = new OpenAIEmbeddings();
   }
 
   public async initialize(): Promise<void> {
-    await this.chromaManager.initialize();
+    try {
+      console.log('Initializing RAG service components');
+      await this.chromaManager.initialize();
+      console.log('RAG service initialization complete');
+    } catch (error) {
+      console.error('Failed to initialize RAG service:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        if (error.stack) {
+          console.error('Stack trace:', error.stack);
+        }
+      }
+      throw error;
+    }
   }
 
   public getChromaManager(): ChromaManager {
@@ -178,15 +204,30 @@ export class RAGService {
     metadatas: Record<string, any>[];
     distances: number[];
   }> {
-    const queryEmbedding = await this.embeddings.embedQuery(query);
-    
-    const results = await this.chromaManager.query([queryEmbedding], nResults);
-    
-    return {
-      chunks: results.documents,
-      metadatas: results.metadatas,
-      distances: results.distances,
-    };
+    try {
+      console.log('Generating embeddings for query:', query);
+      const queryEmbedding = await this.embeddings.embedQuery(query);
+      console.log('Query embedding generated successfully');
+      
+      console.log('Querying Chroma with embeddings');
+      const results = await this.chromaManager.query([queryEmbedding], nResults);
+      console.log('Chroma query completed successfully');
+      
+      return {
+        chunks: results.documents,
+        metadatas: results.metadatas,
+        distances: results.distances,
+      };
+    } catch (error) {
+      console.error('Error in RAG service query:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        if (error.stack) {
+          console.error('Stack trace:', error.stack);
+        }
+      }
+      throw error;
+    }
   }
 
   public async rollbackToVersion(documentId: string, versionId: string): Promise<boolean> {

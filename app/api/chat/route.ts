@@ -1,63 +1,56 @@
-import { NextResponse } from 'next/server'
-import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { ChatOpenAI } from '@langchain/openai'
 
-export async function POST(request: Request) {
+const model = new ChatOpenAI({
+  modelName: 'gpt-3.5-turbo',
+  temperature: 0.7,
+  openAIApiKey: process.env.OPENAI_API_KEY,
+})
+
+export async function POST(req: NextRequest) {
   try {
-    const { message, userId } = await request.json()
-    const cookieStore = cookies()
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
-      {
-        cookies: {
-          get(name: string) {
-            return cookieStore.get(name)?.value
-          },
-        },
-      }
-    )
-
-    // Call x.ai API
-    const response = await fetch('https://api.x.ai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.GROK_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'grok-2-latest',
-        messages: [{ role: 'user', content: message }],
-        temperature: 0.7,
-        max_tokens: 4096
-      }),
-    })
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}))
-      console.error('x.ai API Error:', errorData)
-      throw new Error(`Failed to get response from x.ai: ${response.statusText}`)
+    // Check authentication
+    const session = await getServerSession(authOptions)
+    
+    if (!session) {
+      console.log('Authentication failed')
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
     }
 
-    const data = await response.json()
-    const aiResponse = data.choices[0].message.content
+    const body = await req.json()
+    const { message } = body
 
-    // Save to Supabase if user is authenticated
-    if (userId) {
-      await supabase.from('messages').insert([
-        {
-          user_id: userId,
-          message,
-          response: aiResponse,
-          created_at: new Date().toISOString(),
-        },
-      ])
+    if (!message) {
+      console.log('No message provided')
+      return NextResponse.json(
+        { error: 'Message is required' },
+        { status: 400 }
+      )
     }
 
-    return NextResponse.json({ response: aiResponse })
+    console.log('Generating response for:', message)
+    
+    try {
+      const result = await model.invoke(message)
+      console.log('Response generated successfully')
+      
+      return NextResponse.json({
+        response: result.content,
+      })
+    } catch (error) {
+      console.error('Error generating response:', error)
+      return NextResponse.json(
+        { error: 'Failed to generate response' },
+        { status: 500 }
+      )
+    }
   } catch (error) {
-    console.error('Error in chat API:', error)
+    console.error('Error in chat endpoint:', error)
     return NextResponse.json(
       { error: 'Failed to process chat request' },
       { status: 500 }

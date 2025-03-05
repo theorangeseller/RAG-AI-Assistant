@@ -18,8 +18,10 @@ export class ChromaManager {
 
   constructor(config: ChromaConfig) {
     this.config = config;
+    const chromaUrl = `http://${config.host}:${config.port}`;
+    console.log(`Initializing ChromaClient with URL: ${chromaUrl}`);
     this.client = new ChromaClient({
-      path: `http://${config.host}:${config.port}`,
+      path: chromaUrl,
       fetchOptions: {
         // Add custom fetch options if needed
         headers: {
@@ -31,20 +33,43 @@ export class ChromaManager {
 
   public async initialize(): Promise<void> {
     try {
+      console.log(`Initializing Chroma collection: ${this.config.collectionName}`);
       // First, try to get the collection
       try {
+        console.log('Testing Chroma connection...');
+        await this.client.heartbeat();
+        console.log('Chroma server is responsive');
+        
+        console.log('Attempting to get existing collection');
         this.collection = await this.client.getCollection({
           name: this.config.collectionName,
           embeddingFunction: nullEmbeddingFunction,
         });
+        console.log('Successfully retrieved existing collection');
       } catch (error) {
+        console.error('Error connecting to Chroma or getting collection:', error);
+        if (error instanceof Error) {
+          console.error('Error details:', error.message);
+          if (error.stack) {
+            console.error('Stack trace:', error.stack);
+          }
+        }
+        
+        console.log('Attempting to create new collection');
         this.collection = await this.client.createCollection({
           name: this.config.collectionName,
           embeddingFunction: nullEmbeddingFunction,
         });
+        console.log('Successfully created new collection');
       }
     } catch (error) {
-      console.error('Error initializing Chroma collection:', error);
+      console.error('Error initializing Chroma:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        if (error.stack) {
+          console.error('Stack trace:', error.stack);
+        }
+      }
       throw error;
     }
   }
@@ -82,19 +107,29 @@ export class ChromaManager {
     distances: number[];
   }> {
     if (!this.collection) {
+      console.error('Collection not initialized');
       throw new Error('Collection not initialized');
     }
 
     try {
+      console.log(`Querying Chroma with ${queryEmbeddings.length} embeddings, nResults: ${nResults}`);
+      console.log('Collection state:', {
+        name: this.collection.name,
+        initialized: !!this.collection,
+      });
+      
       const results = await this.collection.query({
         queryEmbeddings,
         nResults,
       });
 
       if (!results.ids?.[0] || !results.documents?.[0] || !results.metadatas?.[0] || !results.distances?.[0]) {
+        console.error('Invalid query results from Chroma:', results);
         throw new Error('Invalid query results from Chroma');
       }
 
+      console.log(`Query returned ${results.ids[0].length} results`);
+      
       return {
         ids: results.ids[0].filter((id): id is string => id !== null),
         documents: results.documents[0].filter((doc): doc is string => doc !== null),
@@ -103,6 +138,12 @@ export class ChromaManager {
       };
     } catch (error) {
       console.error('Error querying Chroma:', error);
+      if (error instanceof Error) {
+        console.error('Error details:', error.message);
+        if (error.stack) {
+          console.error('Stack trace:', error.stack);
+        }
+      }
       throw error;
     }
   }
@@ -157,7 +198,9 @@ export class ChromaManager {
       throw new Error('Collection not initialized');
     }
     try {
+      console.log('Getting collection count');
       const count = await this.collection.count();
+      console.log(`Collection count: ${count}`);
       return count;
     } catch (error) {
       console.error('Error getting collection count:', error);

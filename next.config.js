@@ -16,12 +16,23 @@ const nextConfig = {
     };
 
     // Exclude specific modules from being bundled
-    config.externals = [...(config.externals || []), { 'utf-8-validate': 'commonjs utf-8-validate' }];
+    config.externals = [
+      ...config.externals || [],
+      { 'utf-8-validate': 'commonjs utf-8-validate' },
+      { 'pdf-parse': 'commonjs pdf-parse' }
+    ];
+
+    // Exclude test files and specific directories from being processed
+    config.module.rules.push({
+      test: /\.(js|ts|pdf)$/,
+      include: /[\\/]test[\\/]|[\\/]tests[\\/]/,
+      loader: 'ignore-loader',
+    });
 
     return config;
   },
   experimental: {
-    serverComponentsExternalPackages: ['chromadb'],
+    serverComponentsExternalPackages: ['chromadb', 'pdf-parse'],
   },
 };
 
