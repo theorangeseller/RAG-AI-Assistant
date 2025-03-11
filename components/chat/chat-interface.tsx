@@ -34,13 +34,18 @@ export function ChatInterface() {
                 <Search className="w-5 h-5 text-muted-foreground" />
                 <Sparkles className="w-5 h-5 text-muted-foreground" />
               </div>
-              <input
-                type="text"
+              <textarea
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                  setInput(e.target.value);
+                  // Auto-resize
+                  e.target.style.height = 'inherit';
+                  e.target.style.height = `${e.target.scrollHeight}px`;
+                }}
                 placeholder="What do you want to know?"
-                className="flex-1 px-3 py-3 bg-transparent text-base focus:outline-none"
+                className="flex-1 px-3 py-3 bg-transparent text-base focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto"
                 disabled={isLoading}
+                rows={1}
               />
               <Button 
                 type="submit" 
@@ -80,13 +85,18 @@ export function ChatInterface() {
               <Search className="w-5 h-5 text-muted-foreground" />
               <Sparkles className="w-5 h-5 text-muted-foreground" />
             </div>
-            <input
-              type="text"
+            <textarea
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => {
+                setInput(e.target.value);
+                // Auto-resize
+                e.target.style.height = 'inherit';
+                e.target.style.height = `${e.target.scrollHeight}px`;
+              }}
               placeholder="What do you want to know?"
-              className="flex-1 px-3 py-3 bg-transparent text-base focus:outline-none"
+              className="flex-1 px-3 py-3 bg-transparent text-base focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto"
               disabled={isLoading}
+              rows={1}
             />
             <Button 
               type="submit" 
