@@ -8,8 +8,9 @@ import { cn } from '@/lib/utils'
 import { User, AlertTriangle } from 'lucide-react'
 
 interface Message {
-  role: 'user' | 'assistant' | 'error'
-  content: string
+  role: "user" | "assistant" | "error" | "system";
+  content: string;
+  sources?: string[];
 }
 
 interface ChatMessageProps {

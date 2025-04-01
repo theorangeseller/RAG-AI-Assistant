@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { createClient } from '@supabase/supabase-js'
@@ -62,13 +61,6 @@ export default function SignUp() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <Image
-            src="/grok-logo.png"
-            alt="Grok Logo"
-            width={120}
-            height={120}
-            className="mx-auto mb-6"
-          />
           <h2 className="text-2xl font-semibold tracking-tight">
             Create your account
           </h2>

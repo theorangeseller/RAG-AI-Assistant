@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { signIn } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 
@@ -58,15 +57,6 @@ function SignInContent() {
     <div className="min-h-screen flex items-center justify-center bg-background">
       <div className="w-full max-w-md space-y-8 p-8">
         <div className="text-center">
-          <div className="w-[120px] h-[120px] mx-auto mb-6">
-            <Image
-              src="/logo.svg"
-              alt="Logo"
-              width={120}
-              height={120}
-              priority
-            />
-          </div>
           <h2 className="text-2xl font-semibold tracking-tight mb-1">
             Welcome back
           </h2>

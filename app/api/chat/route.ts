@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { ChatOpenAI } from '@langchain/openai'
 
 const model = new ChatOpenAI({
-  modelName: 'gpt-3.5-turbo',
+  modelName: 'gpt-4',
   temperature: 0.7,
   openAIApiKey: process.env.OPENAI_API_KEY,
 })
