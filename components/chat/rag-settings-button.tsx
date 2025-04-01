@@ -26,7 +26,7 @@ export function RagSettingsButton() {
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setIsRagOpen(true)}>
             <FileText className="mr-2 h-4 w-4" />
-            <span>Document Q&A</span>
+            <span>Document Q&A Assistant</span>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
