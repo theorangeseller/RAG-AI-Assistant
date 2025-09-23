@@ -1,16 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { Button } from '../ui/button'
 import { ChatMessage } from './chat-message'
 import { useChat } from '@/lib/hooks/use-chat'
-import { Search, Sparkles, ArrowUp } from 'lucide-react'
+import { Search, Sparkles, ArrowUp, Upload, FileText } from 'lucide-react'
 
 export function ChatInterface() {
   const { data: session } = useSession()
   const [input, setInput] = useState('')
-  const { messages, sendMessage, isLoading } = useChat()
+  const { messages, sendMessage, uploadFile, isLoading, isUploading } = useChat()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -20,12 +30,29 @@ export function ChatInterface() {
     setInput('')
   }
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    await uploadFile(file)
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
+  }
+
   if (messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full space-y-8">
+        <input
+          type="file"
+          ref={fileInputRef}
+          className="hidden"
+          onChange={handleFileUpload}
+          accept=".txt,.md,.pdf,.doc,.docx,.xls,.xlsx,.csv,.json,.xml"
+        />
         <div className="text-center space-y-1">
-          <h1 className="text-4xl font-semibold tracking-tight">Welcome to OS News AI Assistant.</h1>
-          <p className="text-xl text-muted-foreground">How can I help you today?</p>
+          <h1 className="text-4xl font-semibold tracking-tight">Welcome to OS News AI Assistant</h1>
+          <p className="text-xl text-muted-foreground">Chat with AI or upload documents for Q&A</p>
         </div>
         <div className="w-full max-w-3xl px-4">
           <form onSubmit={handleSubmit}>
@@ -33,6 +60,17 @@ export function ChatInterface() {
               <div className="flex items-center gap-2 px-3">
                 <Search className="w-5 h-5 text-muted-foreground" />
                 <Sparkles className="w-5 h-5 text-muted-foreground" />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="p-0"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isUploading}
+                  title="Upload document"
+                >
+                  <Upload className={`w-5 h-5 text-muted-foreground ${isUploading ? 'animate-pulse' : ''}`} />
+                </Button>
               </div>
               <textarea
                 value={input}
@@ -42,14 +80,14 @@ export function ChatInterface() {
                   e.target.style.height = 'inherit';
                   e.target.style.height = `${e.target.scrollHeight}px`;
                 }}
-                placeholder="What do you want to know?"
+                placeholder="Ask me anything or upload a document..."
                 className="flex-1 px-3 py-3 bg-transparent text-base focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto"
-                disabled={isLoading}
+                disabled={isLoading || isUploading}
                 rows={1}
               />
               <Button 
                 type="submit" 
-                disabled={isLoading || !input.trim()}
+                disabled={isLoading || isUploading || !input.trim()}
                 size="icon"
                 className="mr-1"
               >
@@ -70,11 +108,31 @@ export function ChatInterface() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
+      <input
+        type="file"
+        ref={fileInputRef}
+        className="hidden"
+        onChange={handleFileUpload}
+        accept=".txt,.md,.pdf,.doc,.docx,.xls,.xlsx,.csv,.json,.xml"
+      />
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-4 p-4">
           {messages.map((message, i) => (
-            <ChatMessage key={i} message={message} />
+            <div key={i} className="mb-4 last:mb-0">
+              <ChatMessage message={message} />
+              {message.sources && message.sources.length > 0 && (
+                <div className="text-sm text-muted-foreground ml-12 mt-2">
+                  <p className="font-semibold">Sources:</p>
+                  <ul className="list-disc list-inside">
+                    {message.sources.map((source, idx) => (
+                      <li key={idx}>{source}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       </div>
 
@@ -84,6 +142,17 @@ export function ChatInterface() {
             <div className="flex items-center gap-2 px-3">
               <Search className="w-5 h-5 text-muted-foreground" />
               <Sparkles className="w-5 h-5 text-muted-foreground" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="p-0"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+                title="Upload document"
+              >
+                <Upload className={`w-5 h-5 text-muted-foreground ${isUploading ? 'animate-pulse' : ''}`} />
+              </Button>
             </div>
             <textarea
               value={input}
@@ -93,14 +162,14 @@ export function ChatInterface() {
                 e.target.style.height = 'inherit';
                 e.target.style.height = `${e.target.scrollHeight}px`;
               }}
-              placeholder="What do you want to know?"
+              placeholder="Ask me anything or upload a document..."
               className="flex-1 px-3 py-3 bg-transparent text-base focus:outline-none resize-none min-h-[48px] max-h-[200px] overflow-y-auto"
-              disabled={isLoading}
+              disabled={isLoading || isUploading}
               rows={1}
             />
             <Button 
               type="submit" 
-              disabled={isLoading || !input.trim()}
+              disabled={isLoading || isUploading || !input.trim()}
               size="icon"
               className="mr-1"
             >
