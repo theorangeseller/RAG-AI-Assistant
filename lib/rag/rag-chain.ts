@@ -53,7 +53,7 @@ Answer: `
 const prompt = PromptTemplate.fromTemplate(SYSTEM_TEMPLATE)
 
 const model = new ChatOpenAI({
-  modelName: 'gpt-4',
+  modelName: 'gpt-4o-mini',
   temperature: 0,
   openAIApiKey: process.env.OPENAI_API_KEY,
 })
