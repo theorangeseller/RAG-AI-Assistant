@@ -78,7 +78,7 @@ export function useChat() {
     }
   }
 
-  const uploadFile = async (file: File) => {
+  const uploadFile = async (file: File, onUploadComplete?: () => void) => {
     try {
       setIsUploading(true)
       const formData = new FormData()
@@ -100,6 +100,12 @@ export function useChat() {
         content: `File "${data.filename}" uploaded and processed successfully. You can now ask questions about this document.`
       }])
       toast.success('File uploaded successfully')
+      
+      // Call the callback to refresh file list if provided
+      if (onUploadComplete) {
+        onUploadComplete()
+      }
+      
       return true
     } catch (error) {
       console.error('Upload error:', error)

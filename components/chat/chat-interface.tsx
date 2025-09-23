@@ -94,12 +94,6 @@ export function ChatInterface() {
                 <ArrowUp className="w-4 h-4" />
               </Button>
             </div>
-            <div className="flex justify-center gap-4 mt-4">
-              <Button variant="outline" size="sm">Research</Button>
-              <Button variant="outline" size="sm">Brainstorm</Button>
-              <Button variant="outline" size="sm">Analyze Data</Button>
-              <Button variant="outline" size="sm">Code</Button>
-            </div>
           </form>
         </div>
       </div>
@@ -175,12 +169,6 @@ export function ChatInterface() {
             >
               <ArrowUp className="w-4 h-4" />
             </Button>
-          </div>
-          <div className="flex justify-center gap-4 mt-4">
-            <Button variant="outline" size="sm">Research</Button>
-            <Button variant="outline" size="sm">Brainstorm</Button>
-            <Button variant="outline" size="sm">Analyze Data</Button>
-            <Button variant="outline" size="sm">Code</Button>
           </div>
         </form>
       </div>

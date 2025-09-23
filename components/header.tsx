@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { signIn, signOut, useSession } from 'next-auth/react'
 import { Button } from './ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
@@ -9,16 +10,30 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from './ui/dropdown-menu'
+import { FileText } from 'lucide-react'
+import { FileManager } from './file-manager'
 export function Header() {
   const { data: session } = useSession()
+  const [isFileManagerOpen, setIsFileManagerOpen] = useState(false)
 
   return (
-    <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container mx-auto flex h-14 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <div className="font-semibold tracking-tight">OS News AI Assistant</div>
-        </div>
-        <div className="flex items-center gap-2">
+    <>
+      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto flex h-14 items-center justify-between px-4">
+          <div className="flex items-center gap-2">
+            <div className="font-semibold tracking-tight">OS News AI Assistant</div>
+          </div>
+          <div className="flex items-center gap-2">
+            {session && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsFileManagerOpen(true)}
+                title="Manage Documents"
+              >
+                <FileText className="h-5 w-5" />
+              </Button>
+            )}
           {session ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -42,8 +57,14 @@ export function Header() {
               Sign in
             </Button>
           )}
+          </div>
         </div>
-      </div>
-    </header>
+      </header>
+      
+      <FileManager
+        isOpen={isFileManagerOpen}
+        onOpenChange={setIsFileManagerOpen}
+      />
+    </>
   )
 } 

@@ -245,4 +245,107 @@ export class RAGService {
   public getVersionHistory(documentId: string) {
     return this.versionManager.getVersionHistory(documentId);
   }
+
+  public async listDocuments(): Promise<{
+    filename: string;
+    documentId: string;
+    chunkCount: number;
+    uploadDate: Date;
+    fileSize?: number;
+    fileType: string;
+  }[]> {
+    try {
+      console.log('Listing all documents');
+      
+      // Get all documents from ChromaDB to find unique document IDs
+      const chromaManager = this.getChromaManager();
+      const collection = await chromaManager.getCollection();
+      
+      // Get all documents (this might be a lot, but we need to find unique documentIds)
+      const results = await collection.get({});
+      
+      if (!results.metadatas || results.metadatas.length === 0) {
+        return [];
+      }
+
+      // Group by documentId and get metadata
+      const documentsMap = new Map<string, any>();
+      
+      for (let i = 0; i < results.metadatas.length; i++) {
+        const metadata = results.metadatas[i] as Record<string, any>;
+        const documentId = metadata.documentId;
+        
+        if (documentId && !documentsMap.has(documentId)) {
+          // Get file stats if file exists
+          const filePath = path.join(process.cwd(), 'filesource', documentId);
+          let fileSize: number | undefined;
+          let uploadDate = new Date();
+          
+          try {
+            const stats = await fs.stat(filePath);
+            fileSize = stats.size;
+            uploadDate = stats.mtime;
+          } catch (error) {
+            console.warn(`File not found for document ${documentId}:`, error);
+          }
+          
+          documentsMap.set(documentId, {
+            filename: documentId,
+            documentId,
+            chunkCount: metadata.totalChunks || 0,
+            uploadDate,
+            fileSize,
+            fileType: metadata.fileType || 'unknown'
+          });
+        }
+      }
+      
+      return Array.from(documentsMap.values());
+    } catch (error) {
+      console.error('Error listing documents:', error);
+      throw error;
+    }
+  }
+
+  public async deleteDocument(documentId: string): Promise<boolean> {
+    try {
+      console.log(`Deleting document: ${documentId}`);
+      
+      // 1. Delete from ChromaDB - find all chunks for this document
+      const chromaManager = this.getChromaManager();
+      const collection = await chromaManager.getCollection();
+      
+      // Get all chunks for this document
+      const results = await collection.get({
+        where: { documentId: documentId }
+      });
+      
+      if (results.ids && results.ids.length > 0) {
+        console.log(`Found ${results.ids.length} chunks to delete for document ${documentId}`);
+        await chromaManager.deleteDocuments(results.ids);
+      }
+      
+      // 2. Delete physical file
+      const filePath = path.join(process.cwd(), 'filesource', documentId);
+      try {
+        await fs.unlink(filePath);
+        console.log(`Deleted physical file: ${filePath}`);
+      } catch (error) {
+        console.warn(`Could not delete physical file ${filePath}:`, error);
+      }
+      
+      // 3. Clear cache
+      this.cacheManager.invalidateCache(documentId);
+      console.log(`Cleared cache for document: ${documentId}`);
+      
+      // 4. Remove version history
+      // Note: The version manager doesn't have a delete method, so we'll leave this for now
+      
+      console.log(`Successfully deleted document: ${documentId}`);
+      return true;
+    } catch (error) {
+      console.error(`Error deleting document ${documentId}:`, error);
+      throw error;
+    }
+  }
 } 
