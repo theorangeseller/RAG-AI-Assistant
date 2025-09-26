@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions)
     
-    if (!session) {
+    if (!session?.user?.id) {
       console.log('Authentication failed');
       return NextResponse.json(
         { error: 'Authentication required' },
@@ -45,52 +45,53 @@ export async function POST(req: NextRequest) {
       // Initialize RAG service (this handles both RAG and traditional chat)
       console.log('Getting RAG service');
       const service = await getRagService()
-      const sourceDir = path.join(process.cwd(), 'filesource')
       
-      // Check if filesource directory exists and load documents if needed
+      // Check if user has any documents in Supabase
       try {
-        await fs.access(sourceDir);
-        const files = await fs.readdir(sourceDir);
-        console.log(`Found ${files.length} files in filesource directory:`, files);
+        console.log('Checking user documents in Supabase');
+        const documentCount = await service.getDocumentCount(session.user.id);
+        console.log(`Document count for user ${session.user.id}: ${documentCount}`);
         
-        // Get the Chroma manager from the service
-        console.log('Getting Chroma manager');
-        const chromaManager = await service.getChromaManager();
-        const documentCount = await chromaManager.count();
-        console.log(`Document count in Chroma: ${documentCount}`);
-        
-        if (documentCount === 0 && files.length > 0) {
-          console.log('No documents in Chroma, loading from filesource');
+        // Optional: Load documents from local filesource if no documents exist in Supabase
+        if (documentCount === 0) {
+          console.log('No documents found in Supabase for user, checking local filesource');
+          const sourceDir = path.join(process.cwd(), 'filesource')
           
-          // Filter for supported file types
-          const supportedFiles = files.filter(file => 
-            SUPPORTED_EXTENSIONS.includes(path.extname(file).toLowerCase())
-          );
-          console.log(`Found ${supportedFiles.length} supported files to load:`, supportedFiles);
-          
-          for (const file of supportedFiles) {
-            try {
-              const filePath = path.join(sourceDir, file);
-              console.log(`Loading file: ${filePath}`);
-              await service.addDocument(filePath);
-              console.log(`Successfully loaded file: ${file}`);
-            } catch (error) {
-              console.error(`Error loading file ${file}:`, error);
+          try {
+            await fs.access(sourceDir);
+            const files = await fs.readdir(sourceDir);
+            console.log(`Found ${files.length} files in filesource directory:`, files);
+            
+            // Filter for supported file types
+            const supportedFiles = files.filter(file => 
+              SUPPORTED_EXTENSIONS.includes(path.extname(file).toLowerCase())
+            );
+            console.log(`Found ${supportedFiles.length} supported files to load:`, supportedFiles);
+            
+            for (const file of supportedFiles) {
+              try {
+                const filePath = path.join(sourceDir, file);
+                console.log(`Loading file: ${filePath}`);
+                const fileBuffer = await fs.readFile(filePath);
+                await service.addDocument(fileBuffer, file, session.user.id, { source: 'filesource' });
+                console.log(`Successfully loaded file: ${file}`);
+              } catch (error) {
+                console.error(`Error loading file ${file}:`, error);
+              }
             }
+          } catch (error) {
+            console.log('No filesource directory or error accessing it:', error);
+            // This is fine - the system will fall back to traditional chat
           }
-          
-          // Verify documents were added
-          const newCount = await chromaManager.count();
-          console.log(`New document count after loading: ${newCount}`);
         }
       } catch (error) {
-        console.log('No filesource directory or error accessing it:', error);
+        console.log('Error checking documents:', error);
         // This is fine - the system will fall back to traditional chat
       }
 
       // Use the RAG chain which intelligently decides between RAG and traditional chat
       console.log('Generating response using RAG chain');
-      const { response, relevantSources } = await generateResponse({ question: message });
+      const { response, relevantSources } = await generateResponse({ question: message, userId: session.user.id });
       console.log('Response generated successfully');
       console.log('Relevant sources:', relevantSources);
       

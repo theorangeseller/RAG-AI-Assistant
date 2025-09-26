@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     // Check authentication
     const session = await getServerSession(authOptions)
     
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -19,12 +19,19 @@ export async function GET(req: NextRequest) {
     
     try {
       const service = await getRagService()
-      const documents = await service.listDocuments()
+      const documents = await service.listDocuments(session.user.id)
       
-      console.log(`Found ${documents.length} documents`);
+      console.log(`Found ${documents.length} documents for user ${session.user.id}`);
       
       return NextResponse.json({
-        files: documents
+        files: documents.map(doc => ({
+          filename: doc.filename,
+          documentId: doc.id,
+          chunkCount: 0, // Will be populated by Supabase service if needed
+          uploadDate: doc.uploaded_at,
+          fileSize: doc.file_size,
+          fileType: doc.file_type
+        }))
       })
     } catch (error) {
       console.error('Error fetching file list:', error);

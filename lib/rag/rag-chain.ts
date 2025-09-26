@@ -143,7 +143,7 @@ function requiresDocumentContext(question: string): boolean {
 }
 
 export const ragChain = RunnableSequence.from([
-  async (input: { question: string }) => {
+  async (input: { question: string; userId?: string }) => {
     try {
       console.log('Starting RAG chain processing for question:', input.question);
       
@@ -164,7 +164,7 @@ export const ragChain = RunnableSequence.from([
       console.log('Querying for relevant chunks');
       try {
         // Increased number of chunks to retrieve for better context
-        const { chunks, metadatas, distances } = await service.query(input.question, 6)
+        const { chunks, metadatas, distances } = await service.query(input.question, input.userId || 'anonymous', 6)
         console.log(`Retrieved ${chunks.length} chunks from query`);
         
         // Process and filter chunks
@@ -243,7 +243,7 @@ export const ragChain = RunnableSequence.from([
   }
 ])
 
-export async function generateResponse(input: { question: string }): Promise<{
+export async function generateResponse(input: { question: string; userId?: string }): Promise<{
   response: string;
   relevantSources: string[];
 }> {
@@ -254,7 +254,7 @@ export async function generateResponse(input: { question: string }): Promise<{
     // Extract unique source files from relevant metadata
     const relevantSources: string[] = Array.from(new Set(
       result.relevantMetadata
-        .map((metadata: Record<string, any>) => metadata.source)
+        .map((metadata: Record<string, any>) => metadata.filename || metadata.source)
         .filter((source: unknown): source is string => 
           typeof source === 'string' && source.length > 0
         )

@@ -52,15 +52,15 @@ export function FileManager({ isOpen, onOpenChange }: FileManagerProps) {
     }
   }, [isOpen, session])
 
-  const handleDeleteFile = async (filename: string) => {
+  const handleDeleteFile = async (documentId: string, filename: string) => {
     if (!confirm(`Are you sure you want to delete "${filename}"? This will remove the file and all its associated data from the system.`)) {
       return
     }
 
-    setDeletingFiles(prev => new Set(prev).add(filename))
+    setDeletingFiles(prev => new Set(prev).add(documentId))
     
     try {
-      const response = await fetch(`/api/files/${encodeURIComponent(filename)}`, {
+      const response = await fetch(`/api/files/${encodeURIComponent(documentId)}`, {
         method: 'DELETE'
       })
 
@@ -70,14 +70,14 @@ export function FileManager({ isOpen, onOpenChange }: FileManagerProps) {
       }
 
       toast.success(`File "${filename}" deleted successfully`)
-      setFiles(prev => prev.filter(file => file.filename !== filename))
+      setFiles(prev => prev.filter(file => file.documentId !== documentId))
     } catch (error) {
       console.error('Error deleting file:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to delete file')
     } finally {
       setDeletingFiles(prev => {
         const newSet = new Set(prev)
-        newSet.delete(filename)
+        newSet.delete(documentId)
         return newSet
       })
     }
@@ -161,11 +161,11 @@ export function FileManager({ isOpen, onOpenChange }: FileManagerProps) {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleDeleteFile(file.filename)}
-                      disabled={deletingFiles.has(file.filename)}
+                      onClick={() => handleDeleteFile(file.documentId, file.filename)}
+                      disabled={deletingFiles.has(file.documentId)}
                       className="text-destructive hover:text-destructive-foreground hover:bg-destructive"
                     >
-                      {deletingFiles.has(file.filename) ? (
+                      {deletingFiles.has(file.documentId) ? (
                         <Loader2 className="w-4 h-4 animate-spin" />
                       ) : (
                         <Trash2 className="w-4 h-4" />

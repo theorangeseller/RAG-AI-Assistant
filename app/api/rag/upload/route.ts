@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   try {
     // Check authentication
     const session = await getServerSession(authOptions)
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
@@ -62,9 +62,18 @@ export async function POST(req: NextRequest) {
     // Process and embed the file
     try {
       const service = await getRagService()
-      await service.addDocument(join(filesourceDir, file.name))
+      
+      // Use Supabase RAG service with file buffer and user ID
+      const documentId = await service.addDocument(
+        file,
+        file.name,
+        session.user.id,
+        { uploaded_via: 'api' }
+      )
 
       return NextResponse.json({
+        success: true,
+        documentId,
         message: 'File uploaded and processed successfully',
         filename: file.name
       })

@@ -1,10 +1,12 @@
 import { RAGService } from './rag-service';
+import { getSupabaseRAGService } from './supabase-rag-service'
 import { chromaConfig } from '@/config/chroma';
 import path from 'path';
 
 let ragService: RAGService | null = null;
 
-export async function getRagService() {
+// Keep ChromaDB implementation for backward compatibility
+export async function getChromaRagService() {
   if (!ragService) {
     ragService = new RAGService({
       cacheDir: path.join(process.cwd(), 'data', 'cache'),
@@ -14,4 +16,9 @@ export async function getRagService() {
     await ragService.initialize();
   }
   return ragService;
+}
+
+// Use Supabase RAG service as the default
+export async function getRagService() {
+  return getSupabaseRAGService()
 } 

@@ -11,44 +11,44 @@ export async function DELETE(
     // Check authentication
     const session = await getServerSession(authOptions)
     
-    if (!session) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { error: 'Authentication required' },
         { status: 401 }
       )
     }
 
-    const filename = params.filename
+    const documentId = params.filename // This is actually the document ID for Supabase
     
-    if (!filename) {
+    if (!documentId) {
       return NextResponse.json(
-        { error: 'Filename is required' },
+        { error: 'Document ID is required' },
         { status: 400 }
       )
     }
 
-    console.log(`Deleting file: ${filename} for user: ${session.user?.email}`);
+    console.log(`Deleting document: ${documentId} for user: ${session.user?.email}`);
     
     try {
       const service = await getRagService()
-      const success = await service.deleteDocument(filename)
+      const success = await service.deleteDocument(documentId)
       
       if (success) {
-        console.log(`Successfully deleted file: ${filename}`);
+        console.log(`Successfully deleted document: ${documentId}`);
         return NextResponse.json({
-          message: `File "${filename}" deleted successfully`
+          message: `Document deleted successfully`
         })
       } else {
         return NextResponse.json(
-          { error: 'Failed to delete file' },
+          { error: 'Failed to delete document' },
           { status: 500 }
         )
       }
     } catch (error) {
-      console.error(`Error deleting file ${filename}:`, error);
+      console.error(`Error deleting document ${documentId}:`, error);
       return NextResponse.json(
         { 
-          error: 'Failed to delete file',
+          error: 'Failed to delete document',
           details: error instanceof Error ? error.message : String(error)
         },
         { status: 500 }
