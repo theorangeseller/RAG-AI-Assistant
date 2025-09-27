@@ -270,9 +270,18 @@ export class SupabaseRAGService {
    * Generate content hash for a file
    */
   private async generateContentHash(file: File | Buffer): Promise<string> {
-    const buffer = file instanceof File ? await file.arrayBuffer() : file
+    let buffer: Buffer
+    
+    if (file instanceof File) {
+      const arrayBuffer = await file.arrayBuffer()
+      buffer = Buffer.from(arrayBuffer)
+    } else {
+      // file is already a Buffer
+      buffer = file
+    }
+    
     const crypto = await import('crypto')
-    return crypto.createHash('sha256').update(Buffer.from(buffer)).digest('hex')
+    return crypto.createHash('sha256').update(buffer).digest('hex')
   }
 
   /**
