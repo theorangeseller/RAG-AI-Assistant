@@ -8,13 +8,24 @@ import { createClient } from '@supabase/supabase-js'
 console.log('Environment Variables Debug:')
 console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING')
 console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
+console.log('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY:', process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
 console.log('NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET ? 'SET' : 'MISSING')
+console.log('NEXT_PUBLIC_NEXTAUTH_SECRET:', process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ? 'SET' : 'MISSING')
+
+// AWS Amplify fallback: try server-side first, then build-time variables
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
+
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing Supabase configuration:')
+  console.error('URL:', supabaseUrl ? 'SET' : 'MISSING')
+  console.error('KEY (server):', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
+  console.error('KEY (build):', process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
+  throw new Error(`Missing Supabase configuration. URL: ${supabaseUrl ? 'SET' : 'MISSING'}, KEY: ${supabaseKey ? 'SET' : 'MISSING'}`)
+}
 
 // Create a single supabase client for interacting with your database
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-)
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -100,5 +111,6 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
+  secret: process.env.NEXTAUTH_SECRET || process.env.NEXT_PUBLIC_NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
 } 
