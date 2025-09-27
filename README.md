@@ -51,7 +51,6 @@ A modern AI chatbot interface powered by OpenAI GPT-4, built with Next.js 14, Ta
 
 ## Database Setup
 
-1. Create a new project in Supabase
-2. Create the following table:
+Follow the instructions in the [DEPLOYMENT.md](DEPLOYMENT.md) file to set up the database.
 
 ```
