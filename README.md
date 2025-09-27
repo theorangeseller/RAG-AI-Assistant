@@ -7,7 +7,6 @@ A modern AI chatbot interface powered by OpenAI GPT-4, built with Next.js 14, Ta
 - User authentication with Google and Microsoft accounts
 - OAuth 2.0, JWT, and Email/Password authentication
 - Real-time chat interface with GPT-4
-- Chat history for authenticated users
 - Responsive and modern UI design
 - Secure data storage with Supabase
 - RAG chatbot using Langchain and OpenAI Embedding SDK
@@ -23,7 +22,6 @@ A modern AI chatbot interface powered by OpenAI GPT-4, built with Next.js 14, Ta
 - OpenAI GPT-4
 - Langchain
 - OpenAI Embedding SDK
-- ChromaDB
 
 ## Getting Started
 
@@ -52,5 +50,3 @@ A modern AI chatbot interface powered by OpenAI GPT-4, built with Next.js 14, Ta
 ## Database Setup
 
 Follow the instructions in the [DEPLOYMENT.md](DEPLOYMENT.md) file to set up the database.
-
-```
