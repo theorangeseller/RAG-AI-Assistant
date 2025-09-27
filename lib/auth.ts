@@ -4,6 +4,12 @@ import AzureADProvider from 'next-auth/providers/azure-ad'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { createClient } from '@supabase/supabase-js'
 
+// Debug environment variables (REMOVE AFTER FIXING)
+console.log('Environment Variables Debug:')
+console.log('NEXT_PUBLIC_SUPABASE_URL:', process.env.NEXT_PUBLIC_SUPABASE_URL ? 'SET' : 'MISSING')
+console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
+console.log('NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET ? 'SET' : 'MISSING')
+
 // Create a single supabase client for interacting with your database
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
