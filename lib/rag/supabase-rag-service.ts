@@ -213,8 +213,17 @@ export class SupabaseRAGService {
           } catch (pdfError) {
             console.warn(`PDF text extraction failed for ${filename}, using fallback`)
             // Fallback: treat as binary and extract readable text
-            const buffer = file instanceof File ? await file.arrayBuffer() : file
-            rawContent = Buffer.from(buffer).toString('utf8', 0, Math.min(10000, buffer.byteLength))
+            let buffer: Buffer
+            
+            if (file instanceof File) {
+              const arrayBuffer = await file.arrayBuffer()
+              buffer = Buffer.from(arrayBuffer)
+            } else {
+              // file is already a Buffer
+              buffer = file
+            }
+            
+            rawContent = buffer.toString('utf8', 0, Math.min(10000, buffer.byteLength))
           }
           break
         
