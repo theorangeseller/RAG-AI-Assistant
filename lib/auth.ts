@@ -27,18 +27,29 @@ if (!supabaseUrl || !supabaseKey) {
 // Create a single supabase client for interacting with your database
 const supabase = createClient(supabaseUrl, supabaseKey)
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    AzureADProvider({
-      clientId: process.env.MICROSOFT_CLIENT_ID!,
-      clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
-      tenantId: process.env.MICROSOFT_TENANT_ID,
-    }),
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    }),
-    CredentialsProvider({
+// Only add OAuth providers when env vars are set (avoids 500 on sign-in in production)
+const hasGoogle = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET)
+const hasMicrosoft = !!(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET)
+
+const providers: NextAuthOptions['providers'] = [
+  ...(hasMicrosoft
+    ? [
+        AzureADProvider({
+          clientId: process.env.MICROSOFT_CLIENT_ID!,
+          clientSecret: process.env.MICROSOFT_CLIENT_SECRET!,
+          tenantId: process.env.MICROSOFT_TENANT_ID,
+        }),
+      ]
+    : []),
+  ...(hasGoogle
+    ? [
+        GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID!,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        }),
+      ]
+    : []),
+  CredentialsProvider({
       name: 'Credentials',
       credentials: {
         email: { label: "Email", type: "email" },
@@ -83,8 +94,11 @@ export const authOptions: NextAuthOptions = {
           throw error
         }
       }
-    })
-  ],
+    }),
+]
+
+export const authOptions: NextAuthOptions = {
+  providers,
   pages: {
     signIn: '/auth/signin',
   },
@@ -111,6 +125,12 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  secret: process.env.NEXTAUTH_SECRET || process.env.NEXT_PUBLIC_NEXTAUTH_SECRET,
+  secret: (() => {
+    const secret = process.env.NEXTAUTH_SECRET || process.env.NEXT_PUBLIC_NEXTAUTH_SECRET
+    if (!secret && process.env.NODE_ENV === 'production') {
+      console.error('NEXTAUTH_SECRET is required in production. Set it in Amplify Environment variables.')
+    }
+    return secret
+  })(),
   debug: process.env.NODE_ENV === 'development',
 } 
