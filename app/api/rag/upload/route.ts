@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { writeFile } from 'fs/promises'
+import { mkdir, writeFile } from 'fs/promises'
 import { join } from 'path'
 import { getRagService } from '@/lib/rag/rag-instance'
 
@@ -47,16 +47,16 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create filesource directory if it doesn't exist
-    const filesourceDir = join(process.cwd(), 'filesource')
-    try {
-      await writeFile(join(filesourceDir, file.name), Buffer.from(await file.arrayBuffer()))
-    } catch (error) {
-      console.error('Error saving file:', error)
-      return NextResponse.json(
-        { error: 'Failed to save file' },
-        { status: 500 }
-      )
+    // Legacy local copy for local development only. Supabase is the primary storage path.
+    // In serverless environments (Amplify SSR), local FS is ephemeral and this should not block uploads.
+    if (process.env.NODE_ENV !== 'production') {
+      const filesourceDir = join(process.cwd(), 'filesource')
+      try {
+        await mkdir(filesourceDir, { recursive: true })
+        await writeFile(join(filesourceDir, file.name), Buffer.from(await file.arrayBuffer()))
+      } catch (error) {
+        console.warn('Skipping local filesource save; continuing with Supabase upload:', error)
+      }
     }
 
     // Process and embed the file
