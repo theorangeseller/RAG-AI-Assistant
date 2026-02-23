@@ -8,15 +8,6 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY
 const hasSupabaseCredentialsAuth = !!(supabaseUrl && supabaseKey)
 
-if (process.env.NODE_ENV !== 'production') {
-  console.log('Auth environment debug:')
-  console.log('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl ? 'SET' : 'MISSING')
-  console.log('SUPABASE_SERVICE_ROLE_KEY:', process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
-  console.log('NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY:', process.env.NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY ? 'SET' : 'MISSING')
-  console.log('NEXTAUTH_SECRET:', process.env.NEXTAUTH_SECRET ? 'SET' : 'MISSING')
-  console.log('NEXT_PUBLIC_NEXTAUTH_SECRET:', process.env.NEXT_PUBLIC_NEXTAUTH_SECRET ? 'SET' : 'MISSING')
-}
-
 if (!hasSupabaseCredentialsAuth) {
   console.warn(
     'Supabase credentials auth disabled: missing NEXT_PUBLIC_SUPABASE_URL and/or SUPABASE_SERVICE_ROLE_KEY. OAuth providers can still be used.'
