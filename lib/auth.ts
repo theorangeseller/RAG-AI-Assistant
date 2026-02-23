@@ -76,18 +76,21 @@ const providers: NextAuthOptions['providers'] = [
             throw new Error('No user found')
           }
 
-          // Get additional user data if needed
-          const { data: profile } = await supabase
+          // Optional: get profile from public.users if the table exists (avoid 500 when it does not)
+          let profile: { full_name?: string; avatar_url?: string } | null = null
+          const { data: profileData, error: profileError } = await supabase
             .from('users')
-            .select('*')
+            .select('full_name, avatar_url')
             .eq('id', user.id)
-            .single()
+            .maybeSingle()
+          if (!profileError) profile = profileData
+          // If profileError (e.g. relation "users" does not exist), use auth user metadata only
 
           return {
             id: user.id,
-            email: user.email,
-            name: user.user_metadata?.full_name || profile?.full_name,
-            image: profile?.avatar_url,
+            email: user.email ?? undefined,
+            name: user.user_metadata?.full_name ?? profile?.full_name ?? user.email ?? undefined,
+            image: profile?.avatar_url ?? user.user_metadata?.avatar_url,
           }
         } catch (error) {
           console.error('Auth error:', error)
